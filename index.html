@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f6fa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14161c" media="(prefers-color-scheme: dark)">
+<title>Part 5 Drill</title>
+<style>
+:root{
+  --bg:#f5f6fa; --surface:#ffffff; --surface2:#eef0f6; --text:#1b1e27; --muted:#6a7080;
+  --line:#dde1ea; --accent:#3b5bfd; --accent-ink:#ffffff; --accent-soft:#e6ebff;
+  --ok:#16a34a; --ok-soft:#dcfce7; --bad:#dc2626; --bad-soft:#fee2e2; --warn:#f59e0b;
+  --heart:#ef4444; --shadow:0 2px 10px rgba(20,30,60,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#14161c; --surface:#1e212a; --surface2:#272b36; --text:#eef0f5; --muted:#9aa1b2;
+    --line:#333847; --accent:#7b93ff; --accent-ink:#0f1220; --accent-soft:#273055;
+    --ok:#4ade80; --ok-soft:#173826; --bad:#f87171; --bad-soft:#3d1c1c; --warn:#fbbf24;
+    --heart:#f87171; --shadow:0 2px 10px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",sans-serif;
+  overflow-x:hidden;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;border:none;background:none;cursor:pointer}
+.app{max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
+  padding:max(12px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+.screen{display:none;flex:1;flex-direction:column;min-height:0}
+.screen.active{display:flex}
+
+/* ---------- HOME ---------- */
+.brand{margin:12px 0 4px;font-size:26px;font-weight:800;letter-spacing:-.5px}
+.brand small{display:block;font-size:13px;font-weight:500;color:var(--muted);letter-spacing:0;margin-top:4px}
+.card{background:var(--surface);border-radius:16px;padding:16px;box-shadow:var(--shadow);margin-top:14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.best{font-size:14px;color:var(--muted)}
+.best b{font-size:22px;color:var(--text);margin-left:6px}
+.badge{display:none;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;margin-top:12px;
+  background:linear-gradient(135deg,#fde68a,#f59e0b);color:#3b2600;font-weight:700;font-size:15px}
+.badge.on{display:flex;animation:pop .5s ease}
+.sec-title{font-size:14px;font-weight:700;margin:0 0 10px;color:var(--muted)}
+.m-item{margin:10px 0}
+.m-label{display:flex;justify-content:space-between;font-size:14px;margin-bottom:5px}
+.m-label span:last-child{color:var(--muted);font-variant-numeric:tabular-nums}
+.gauge{height:8px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.gauge i{display:block;height:100%;border-radius:99px;background:var(--accent);transition:width .5s ease}
+.gauge i.hi{background:var(--ok)}
+.gauge i.lo{background:var(--warn)}
+.home-actions{margin-top:auto;padding-top:16px;display:grid;gap:10px}
+.btn{min-height:56px;border-radius:14px;font-size:17px;font-weight:700;background:var(--surface);box-shadow:var(--shadow);
+  display:flex;align-items:center;justify-content:center;gap:8px;padding:0 16px;transition:transform .08s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pill{font-size:12px;font-weight:700;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:99px}
+
+/* ---------- GAME ---------- */
+.hud{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0 8px}
+.hearts{font-size:22px;letter-spacing:2px;min-width:84px}
+.hearts .h{display:inline-block;transition:transform .3s,opacity .3s}
+.hearts .h.lost{opacity:.18;filter:grayscale(1)}
+.hearts .h.break{animation:heartbreak .5s ease}
+.score{text-align:center;flex:1}
+.score .v{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;display:inline-block}
+.score .v.bump{animation:pop .35s ease}
+.score .l{font-size:11px;color:var(--muted);display:block;margin-top:-2px}
+.combo{min-width:84px;text-align:right;font-weight:800;color:var(--muted);font-size:14px;line-height:1.15}
+.combo b{display:block;font-size:20px;color:var(--text)}
+.combo.hot b{color:var(--warn)}
+.combo.bump{animation:pop .35s ease}
+.quit{font-size:13px;color:var(--muted);padding:6px 4px}
+.timerbar{height:6px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-bottom:6px;display:none}
+.timerbar.on{display:block}
+.timerbar i{display:block;height:100%;background:var(--accent);width:100%}
+.timerbar i.low{background:var(--bad)}
+.qwrap{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;padding:8px 0}
+.meta{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:10px}
+.qno{font-weight:700}
+.sentence{font-size:20px;line-height:1.6;font-weight:500;background:var(--surface);border-radius:16px;padding:20px 18px;box-shadow:var(--shadow);word-break:keep-all;overflow-wrap:break-word}
+.blank{display:inline-block;min-width:88px;border-bottom:3px solid var(--accent);background:var(--accent-soft);color:var(--accent);
+  border-radius:6px 6px 0 0;text-align:center;padding:0 6px;font-weight:800;margin:0 2px;transition:background .2s}
+.blank.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.blank.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.opts{display:grid;gap:10px;padding-top:10px}
+.opt{min-height:58px;border-radius:14px;background:var(--surface);box-shadow:var(--shadow);font-size:18px;font-weight:600;
+  display:flex;align-items:center;gap:12px;padding:10px 16px;text-align:left;border:2px solid transparent;transition:transform .08s,background .2s}
+.opt:active{transform:scale(.98)}
+.opt .k{width:30px;height:30px;flex:none;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--muted)}
+.opt.ok{background:var(--ok-soft);border-color:var(--ok);animation:pop .35s ease}
+.opt.ok .k{background:var(--ok);color:#fff}
+.opt.bad{background:var(--bad-soft);border-color:var(--bad);animation:shake .4s ease}
+.opt.bad .k{background:var(--bad);color:#fff}
+.opt.dim{opacity:.45}
+.locked .opt{pointer-events:none}
+
+.explain{display:none;background:var(--surface);border-radius:16px;padding:16px;box-shadow:var(--shadow);margin-top:10px;animation:slideup .25s ease}
+.explain.on{display:block}
+.ex-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ex-res{font-size:18px;font-weight:800}
+.ex-res.ok{color:var(--ok)} .ex-res.bad{color:var(--bad)}
+.ex-gain{font-weight:800;color:var(--ok)}
+.ex-ans{font-size:15px;margin-bottom:6px}
+.ex-body{font-size:15px;line-height:1.55;color:var(--text);background:var(--surface2);border-radius:10px;padding:10px 12px;word-break:keep-all}
+.next{margin-top:12px;width:100%}
+
+.float{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);pointer-events:none;font-size:30px;font-weight:900;color:var(--warn);
+  text-shadow:0 2px 12px rgba(0,0,0,.2);animation:floatup .9s ease forwards;z-index:30;white-space:nowrap}
+.toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:linear-gradient(135deg,#fde68a,#f59e0b);color:#3b2600;
+  font-weight:800;padding:12px 18px;border-radius:14px;box-shadow:var(--shadow);z-index:40;animation:toast 2.8s ease forwards;max-width:calc(100% - 32px);text-align:center}
+
+/* ---------- RESULT ---------- */
+.res-top{text-align:center;padding:20px 0 4px}
+.res-top h2{margin:0;font-size:16px;color:var(--muted);font-weight:600}
+.res-score{font-size:52px;font-weight:900;margin:4px 0;font-variant-numeric:tabular-nums;animation:pop .5s ease}
+.newbest{display:inline-block;background:var(--warn);color:#3b2600;font-weight:800;font-size:13px;padding:3px 10px;border-radius:99px}
+.res-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.stat{background:var(--surface);border-radius:12px;padding:10px;text-align:center;box-shadow:var(--shadow)}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:12px;color:var(--muted)}
+.scroll{flex:1;min-height:0;overflow-y:auto}
+
+/* ---------- SHEET ---------- */
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:50;align-items:flex-end;justify-content:center}
+.sheet-bg.on{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:18px 16px max(18px,env(safe-area-inset-bottom));
+  max-height:85vh;overflow-y:auto;animation:slideup .25s ease}
+.sheet h3{margin:0 0 12px;font-size:18px}
+.type-btn{width:100%;background:var(--surface);border-radius:14px;padding:14px;margin-bottom:8px;text-align:left;box-shadow:var(--shadow);min-height:56px}
+.type-btn .m-label{margin-bottom:6px;font-weight:700}
+.set-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-radius:14px;padding:14px;margin-bottom:8px;min-height:56px;gap:12px}
+.set-row p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+.switch{position:relative;width:52px;height:30px;flex:none;border-radius:99px;background:var(--line);transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.switch.on{background:var(--accent)}
+.switch.on::after{transform:translateX(22px)}
+.danger{color:var(--bad);font-weight:700}
+
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes heartbreak{0%{transform:scale(1)}30%{transform:scale(1.4) rotate(-12deg)}100%{transform:scale(1)}}
+@keyframes slideup{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+@keyframes floatup{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-110%) scale(1)}}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,-20px)}10%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-20px)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HOME -->
+  <section class="screen active" id="home">
+    <div class="brand">TOEIC Part 5 Drill<small>자리를 보고 푸는 문법 무한 훈련</small></div>
+    <div class="card">
+      <div class="row"><span class="best">최고 점수<b id="bestScore">0</b></span><span class="pill" id="totalQ"></span></div>
+      <div class="badge" id="masterBadge">🏅 Part 5 마스터 — 모든 유형 숙련도 80% 이상</div>
+    </div>
+    <div class="card">
+      <p class="sec-title">유형별 숙련도</p>
+      <div id="masteryList"></div>
+    </div>
+    <div class="home-actions">
+      <button class="btn primary" id="btnStart">▶ 무한 모드 시작</button>
+      <div class="btn-row">
+        <button class="btn" id="btnFocus">🎯 집중 연습</button>
+        <button class="btn" id="btnReview">📒 오답노트 <span class="pill" id="wrongCount">0</span></button>
+      </div>
+      <button class="btn" id="btnSettings">⚙️ 설정</button>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section class="screen" id="game">
+    <div class="hud">
+      <div class="hearts" id="hearts"></div>
+      <div class="score"><span class="v" id="score">0</span><span class="l">SCORE</span></div>
+      <div class="combo" id="combo"><b>0</b>COMBO</div>
+    </div>
+    <div class="timerbar" id="timerbar"><i id="timerfill"></i></div>
+    <div class="qwrap">
+      <div class="meta"><span class="qno" id="qno">Q1</span><span class="pill" id="qtag"></span><span id="modeLabel"></span><span style="flex:1"></span><span id="timeTxt"></span><button class="quit" id="btnQuit">그만하기</button></div>
+      <div class="sentence" id="sentence"></div>
+      <div class="explain" id="explain">
+        <div class="ex-head"><span class="ex-res" id="exRes"></span><span class="ex-gain" id="exGain"></span></div>
+        <div class="ex-ans" id="exAns"></div>
+        <div class="ex-body" id="exBody"></div>
+      </div>
+    </div>
+    <div class="opts" id="opts"></div>
+    <button class="btn primary next" id="btnNext" style="display:none">다음 →</button>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="result">
+    <div class="scroll">
+      <div class="res-top">
+        <h2 id="resTitle">게임 종료</h2>
+        <div class="res-score" id="resScore">0</div>
+        <span class="newbest" id="newBest" style="display:none">NEW BEST!</span>
+      </div>
+      <div class="res-stats">
+        <div class="stat"><b id="resSolved">0</b><span>푼 문제</span></div>
+        <div class="stat"><b id="resAcc">0%</b><span>정답률</span></div>
+        <div class="stat"><b id="resCombo">0</b><span>최대 콤보</span></div>
+      </div>
+      <div class="card">
+        <p class="sec-title">이번 게임 유형별 정답률</p>
+        <div id="resTypes"></div>
+      </div>
+    </div>
+    <div class="home-actions">
+      <button class="btn primary" id="btnRetry">↻ 다시 하기</button>
+      <button class="btn" id="btnHome">홈으로</button>
+    </div>
+  </section>
+</div>
+
+<!-- SHEETS -->
+<div class="sheet-bg" id="focusSheet">
+  <div class="sheet">
+    <h3>🎯 집중 연습 — 유형 선택</h3>
+    <div id="focusList"></div>
+    <button class="btn" style="width:100%" data-close>닫기</button>
+  </div>
+</div>
+<div class="sheet-bg" id="settingsSheet">
+  <div class="sheet">
+    <h3>⚙️ 설정</h3>
+    <div class="set-row"><div><b>20초 타이머 모드</b><p>실전 감각용. 시간 초과는 오답 처리, 남은 시간은 보너스 점수</p></div><button class="switch" id="swTimer" aria-label="타이머"></button></div>
+    <div class="set-row"><div><b>진동</b><p>정답·오답 시 짧은 진동 (지원 기기만)</p></div><button class="switch" id="swVib" aria-label="진동"></button></div>
+    <div class="set-row"><div><b class="danger">기록 초기화</b><p>숙련도·최고 점수·오답노트 삭제</p></div><button class="btn" id="btnReset" style="min-height:44px;font-size:14px">초기화</button></div>
+    <button class="btn" style="width:100%" data-close>닫기</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= 문제 데이터 =================
+   [문장, [정답, 오답, 오답, 오답], 해설]  — 보기는 화면에 표시할 때 섞는다 */
+const TYPES = {
+  verb:  "동사 자리",
+  modal: "조동사 뒤",
+  noun:  "명사 자리",
+  adj:   "형용사 자리",
+  adv:   "부사 자리",
+  ger:   "동명사",
+  quant: "수량 표현"
+};
+const RAW = {
+verb: [
+ ["Mr. Park ___ customer complaints every morning.", ["handles","handling","to handle","handler"], "주어 Mr. Park 뒤에 동사가 없음 → 동사 자리. -ing·to부정사는 혼자 동사 불가, handler는 명사."],
+ ["The new manager ___ that the project would finish ahead of schedule.", ["announced","announcing","to announce","announcement"], "주어 뒤 동사 없음 → 동사 자리. 뒤의 would가 과거 단서 → 과거형 announced."],
+ ["Our technicians ___ the copier on the third floor right now.", ["are repairing","repairing","to repair","repairer"], "-ing는 혼자 동사가 될 수 없음(He repairing X) → be동사 + -ing인 are repairing."],
+ ["The director ___ the budget proposal yesterday afternoon.", ["approved","approving","to approve","approval"], "주어 뒤 동사 없음 → 동사 자리. yesterday(과거 단서) → 과거형."],
+ ["All employees ___ the safety training once a year.", ["attend","attending","to attend","attendance"], "주어 All employees 뒤 동사 없음 → 동사 자리. -ing·to부정사·명사는 동사 역할 불가."],
+ ["Ms. Lee ___ that the shipment would arrive by Friday.", ["confirmed","confirming","to confirm","confirmation"], "동사 자리 + 뒤 would(과거 단서) → 과거형 confirmed."],
+ ["The company ___ its headquarters to Seoul two years ago.", ["relocated","relocating","to relocate","relocation"], "동사 자리 + two years ago(과거 단서) → 과거형."],
+ ["The receptionist ___ visitors to the waiting area.", ["directs","directing","to direct","direction"], "주어 뒤 동사 없음 → 동사 자리. 3인칭 단수 현재 directs."],
+ ["Sales of the new laptop ___ sharply last quarter.", ["increased","increasing","to increase","increasingly"], "주어 Sales 뒤 동사 없음 → 동사 자리. last quarter(과거 단서) → 과거형."],
+ ["The CEO ___ that the merger would benefit both companies.", ["believed","believing","to believe","belief"], "동사 자리 + 뒤 would(과거 단서) → 과거형 believed."],
+ ["Our team ___ on the annual report this week.", ["is working","working","to work","worker"], "-ing 혼자서는 동사 불가 → be동사 + -ing(is working)."],
+ ["The supplier ___ the order without any delay last week.", ["delivered","delivering","to deliver","delivery"], "동사 자리 + last week(과거 단서) → 과거형."],
+ ["The committee members ___ the proposal at every monthly meeting.", ["discuss","discussing","to discuss","discussion"], "주어 뒤 동사 없음 → 동사 자리. 복수 주어 → discuss."],
+ ["Mr. Choi ___ the staff that the office would close early on Friday.", ["informed","informing","to inform","information"], "동사 자리 + 뒤 would(과거 단서) → 과거형 informed."],
+ ["The hotel ___ free breakfast to all guests.", ["provides","providing","to provide","provider"], "주어 The hotel 뒤 동사 없음 → 동사 자리. 단수 주어 → provides."],
+ ["The engineers ___ a new testing method last month.", ["developed","developing","to develop","developer"], "동사 자리 + last month(과거 단서) → 과거형."],
+ ["Ms. Han ___ the conference schedule before she left the office.", ["reviewed","reviewing","to review","reviewer"], "동사 자리 + left(과거 시제 단서) → 과거형 reviewed."],
+ ["The store manager ___ the inventory every Friday.", ["checks","checking","to check","checker"], "주어 뒤 동사 없음 → 동사 자리. 단수 주어 → checks."],
+ ["The board ___ that the new policy would take effect in May.", ["decided","deciding","to decide","decision"], "동사 자리 + 뒤 would(과거 단서) → 과거형 decided."],
+ ["Several applicants ___ for the position last week.", ["applied","applying","to apply","application"], "동사 자리 + last week(과거 단서) → 과거형."],
+ ["The accounting department ___ invoices within three business days.", ["processes","processing","to process","processor"], "주어 뒤 동사 없음 → 동사 자리. 단수 주어 → processes."],
+ ["The interns ___ the files when the manager arrived.", ["were organizing","organizing","to organize","organizer"], "-ing 혼자 동사 불가 → be + -ing. arrived(과거) → were organizing."]
+],
+modal: [
+ ["The documents will ___ to the client by Friday.", ["be sent","send","sending","sent"], "문서는 '보내지는' 대상(당함) → will + be p.p. = will be sent."],
+ ["All staff must ___ the online training by June 30.", ["complete","be completed","completing","completed"], "직원이 직접 끝냄 + 뒤에 목적어 → must + 동사원형."],
+ ["Employees should ___ their e-mail before the meeting.", ["check","be checked","checking","checked"], "직원이 직접 확인함 + 목적어 their e-mail → should + 동사원형."],
+ ["The report must ___ before the end of the day.", ["be submitted","submit","submitting","submitted"], "보고서는 '제출되는' 대상 → must + be p.p."],
+ ["Ms. Kim will ___ the new interns next Monday.", ["train","be trained","training","trained"], "Ms. Kim이 직접 교육함 + 목적어 → will + 동사원형."],
+ ["The broken machine can ___ within two hours.", ["be repaired","repair","repairing","repaired"], "기계는 '수리되는' 대상 → can + be p.p."],
+ ["Visitors may ___ the gift shop after the tour.", ["visit","be visited","visiting","visited"], "방문객이 직접 방문함 + 목적어 → may + 동사원형."],
+ ["The conference room should ___ before the clients arrive.", ["be cleaned","clean","cleaning","cleaned"], "회의실은 '청소되는' 대상 → should + be p.p."],
+ ["Our sales team will ___ the results at the next meeting.", ["present","be presented","presenting","presented"], "팀이 직접 발표함 + 목적어 → will + 동사원형."],
+ ["The new policy will ___ to all employees next week.", ["be announced","announce","announcing","announced"], "정책은 '발표되는' 대상 → will + be p.p."],
+ ["Applicants must ___ a copy of their résumé.", ["submit","be submitted","submitting","submitted"], "지원자가 직접 제출함 + 목적어 → must + 동사원형."],
+ ["Payment can ___ by credit card or bank transfer.", ["be made","make","making","made"], "결제는 '이루어지는' 대상 → can + be p.p."],
+ ["The manager may ___ the deadline if necessary.", ["extend","be extended","extending","extended"], "매니저가 직접 연장함 + 목적어 → may + 동사원형."],
+ ["All packages must ___ before shipping.", ["be inspected","inspect","inspecting","inspected"], "소포는 '검사되는' 대상 → must + be p.p."],
+ ["The technician will ___ the software tomorrow morning.", ["install","be installed","installing","installed"], "기술자가 직접 설치함 + 목적어 → will + 동사원형."],
+ ["The schedule can ___ on the company Web site.", ["be found","find","finding","found"], "일정은 '발견되는' 대상 → can + be p.p."],
+ ["Customers should ___ their receipts for possible returns.", ["keep","be kept","keeping","kept"], "고객이 직접 보관함 + 목적어 → should + 동사원형."],
+ ["The awards ceremony will ___ in the main hall on Friday.", ["be held","hold","holding","held"], "행사는 '개최되는' 대상 → will + be p.p."],
+ ["Mr. Oh can ___ your questions about the benefits program.", ["answer","be answered","answering","answered"], "Mr. Oh가 직접 답함 + 목적어 → can + 동사원형."],
+ ["Safety goggles must ___ at all times in the laboratory.", ["be worn","wear","wearing","worn"], "고글은 '착용되는' 대상 → must + be p.p."],
+ ["The team should ___ the budget before submitting it.", ["revise","be revised","revising","revised"], "팀이 직접 수정함 + 목적어 → should + 동사원형."],
+ ["The winners will ___ by e-mail next week.", ["be notified","notify","notifying","notified"], "수상자는 '통보받는' 대상 → will + be p.p."]
+],
+noun: [
+ ["The ___ of the new software took three months.", ["development","develop","developed","developmental"], "빈칸 앞 the, 뒤 of → the ___ of 구조 → 명사 자리."],
+ ["We appreciate your ___ in our products.", ["interest","interested","interesting","interestingly"], "소유격 your 뒤 → 명사 자리."],
+ ["The manager made an important ___ about the merger.", ["announcement","announce","announced","announcing"], "관사 an + 형용사 important 뒤 → 명사 자리."],
+ ["Our ___ to quality has made us an industry leader.", ["commitment","commit","committed","committing"], "소유격 Our 뒤 → 명사 자리."],
+ ["Mr. Lee is responsible for the ___ of new suppliers.", ["selection","select","selective","selected"], "the ___ of 구조 → 명사 자리."],
+ ["The company will review all ___ before making a decision.", ["applications","apply","applied","applicable"], "동사 review의 목적어 자리 → 명사."],
+ ["Please contact Ms. Park for more ___.", ["information","inform","informative","informed"], "전치사 for + 형용사 more 뒤 → 명사 자리."],
+ ["After the ___ of the project, the team celebrated.", ["completion","complete","completed","completely"], "the ___ of 구조 → 명사 자리."],
+ ["The new system has improved the ___ of our factory.", ["efficiency","efficient","efficiently","more efficient"], "the ___ of 구조 → 명사 자리."],
+ ["The CEO thanked the staff for their ___.", ["cooperation","cooperate","cooperative","cooperatively"], "소유격 their 뒤 → 명사 자리."],
+ ["We need to make a ___ by the end of the week.", ["decision","decide","decisive","decisively"], "관사 a 뒤 + make의 목적어 → 명사 자리."],
+ ["The hotel offers comfortable ___ for business travelers.", ["accommodations","accommodate","accommodating","accommodated"], "형용사 comfortable 뒤 + offers의 목적어 → 명사 자리."],
+ ["With the ___ of two new members, the team is now complete.", ["addition","add","additional","additionally"], "the ___ of 구조 → 명사 자리."],
+ ["The survey measured our customers' ___ with the service.", ["satisfaction","satisfy","satisfied","satisfying"], "소유격 customers' 뒤 → 명사 자리."],
+ ["Mr. Kim gave a detailed ___ of the sales figures.", ["analysis","analyze","analytical","analytically"], "관사 a + 형용사 detailed 뒤 → 명사 자리."],
+ ["The ___ of the new factory will create 200 jobs.", ["construction","construct","constructive","constructed"], "the ___ of 구조 → 명사 자리."],
+ ["Thank you for your prompt ___.", ["response","respond","responsive","responsively"], "소유격 your + 형용사 prompt 뒤 → 명사 자리."],
+ ["The company announced the ___ of its new CEO.", ["appointment","appoint","appointed","appointing"], "the ___ of 구조 → 명사 자리."],
+ ["Ms. Yoon has extensive ___ of the local market.", ["knowledge","know","knowledgeable","knowingly"], "형용사 extensive 뒤 + has의 목적어 → 명사 자리."],
+ ["Employees must obtain ___ before using the equipment.", ["authorization","authorize","authorized","authorizing"], "동사 obtain의 목적어 자리 → 명사."],
+ ["The manager expressed her ___ for the team's hard work.", ["appreciation","appreciate","appreciative","appreciatively"], "소유격 her 뒤 + expressed의 목적어 → 명사 자리."],
+ ["For further ___, please call our help desk.", ["assistance","assist","assisting","assisted"], "전치사 For + 형용사 further 뒤 → 명사 자리. 형용사 뒤라 동명사는 불가."],
+ ["Thank you for ___ our customer survey.", ["completing","complete","completion","completed"], "전치사 for 뒤 → 명사/동명사 자리. 뒤에 목적어 our survey가 있으므로 동명사 completing."]
+],
+adj: [
+ ["The new design is very ___ to customers.", ["attractive","attract","attraction","attractively"], "be동사 is + 부사 very 뒤 → 형용사 자리."],
+ ["The results of the survey were ___.", ["impressive","impress","impression","impressively"], "be동사 were 뒤 → 형용사 자리."],
+ ["The new software makes the process more ___.", ["efficient","efficiency","efficiently","efficiencies"], "make + 목적어(the process) + 형용사 구조 → 형용사 자리."],
+ ["It is ___ to check the report before submitting it.", ["important","importance","importantly","more importantly"], "It is + 형용사 + to do 구조 → 형용사 자리."],
+ ["The hotel staff were extremely ___.", ["helpful","help","helpfully","helpfulness"], "be동사 + 부사 extremely + 형용사 → 형용사 자리."],
+ ["The market has become highly ___.", ["competitive","compete","competition","competitively"], "become + 부사 highly 뒤 → 형용사 자리."],
+ ["The flexible schedule made employees more ___.", ["productive","produce","productivity","productively"], "make + 목적어(employees) + 형용사 구조 → 형용사 자리."],
+ ["It is ___ to wear a helmet on the construction site.", ["necessary","necessity","necessarily","necessitate"], "It is + 형용사 + to do 구조 → 형용사 자리."],
+ ["Ms. Cho is ___ for the new marketing campaign.", ["responsible","responsibility","responsibly","responsibilities"], "be동사 is 뒤 → 형용사 자리 (be responsible for)."],
+ ["The instructions were ___ to follow.", ["easy","ease","easily","easiness"], "be동사 were 뒤 → 형용사 자리."],
+ ["The new office location is ___ for most employees.", ["convenient","convenience","conveniently","conveniences"], "be동사 is 뒤 → 형용사 자리."],
+ ["It is ___ to submit the form by Friday.", ["essential","essence","essentially","essentials"], "It is + 형용사 + to do 구조 → 형용사 자리."],
+ ["The training session was very ___.", ["informative","inform","information","informatively"], "be동사 + 부사 very 뒤 → 형용사 자리."],
+ ["Customer feedback has become increasingly ___.", ["positive","positively","positivity","positiveness"], "become + 부사 increasingly 뒤 → 형용사 자리."],
+ ["The online system made the application process ___.", ["simple","simplify","simply","simplicity"], "make + 목적어 + 형용사 구조 → 형용사 자리."],
+ ["It is ___ to learn new skills throughout your career.", ["beneficial","benefit","beneficially","beneficiary"], "It is + 형용사 + to do 구조 → 형용사 자리."],
+ ["The new vacation policy is extremely ___ among staff.", ["popular","popularity","popularly","popularize"], "be동사 + 부사 extremely 뒤 → 형용사 자리."],
+ ["All participants were ___ with the workshop.", ["satisfied","satisfy","satisfaction","satisfactorily"], "be동사 were 뒤 → 형용사 자리 (be satisfied with)."],
+ ["The renovation made the lobby more ___.", ["spacious","space","spaciously","spaciousness"], "make + 목적어(the lobby) + 형용사 구조 → 형용사 자리."],
+ ["The product quickly became ___ in Asian markets.", ["successful","success","successfully","succeed"], "become(became) 뒤 → 형용사 자리."],
+ ["The price of the repair service is ___.", ["reasonable","reason","reasonably","reasoning"], "be동사 is 뒤 → 형용사 자리."],
+ ["It is ___ to book a hotel room early during the festival.", ["advisable","advise","advice","advisably"], "It is + 형용사 + to do 구조 → 형용사 자리."]
+],
+adv: [
+ ["Please ___ review the contract before signing it.", ["carefully","careful","care","carefulness"], "동사 review 앞 → 부사 자리."],
+ ["The new employees work ___.", ["efficiently","efficient","efficiency","efficiencies"], "동사 work 뒤(자동사, 목적어 없음) → 부사 자리."],
+ ["The new treatment is ___ effective.", ["highly","high","height","heights"], "be동사 is와 형용사 effective 사이 → 부사 자리."],
+ ["This training is ___ important for new staff.", ["extremely","extreme","extremes","extremity"], "형용사 important 앞 → 부사 자리."],
+ ["___, sales increased by 20 percent.", ["Recently","Recent","Recency","Recentness"], "문장 맨 앞 + 콤마 → 부사 자리."],
+ ["The team ___ completed the project on time.", ["successfully","successful","success","succeed"], "동사 completed 앞 → 부사 자리."],
+ ["Prices have increased ___ this year.", ["significantly","significant","significance","signify"], "동사 increased 뒤 → 부사 자리."],
+ ["The instructions are ___ simple.", ["surprisingly","surprising","surprise","surprised"], "be동사와 형용사 simple 사이 → 부사 자리."],
+ ["___, the meeting has been postponed until next week.", ["Unfortunately","Unfortunate","Fortune","Misfortune"], "문장 맨 앞 + 콤마 → 부사 자리."],
+ ["Mr. Ahn ___ checks his e-mail before meetings.", ["regularly","regular","regularity","regulate"], "동사 checks 앞 → 부사 자리."],
+ ["The staff responded ___ to customer complaints.", ["quickly","quick","quickness","quicken"], "동사 responded 뒤 → 부사 자리."],
+ ["The new store is ___ popular with young customers.", ["especially","special","specialty","specialize"], "be동사와 형용사 popular 사이 → 부사 자리."],
+ ["Our sales are ___ higher than last year.", ["considerably","considerable","consider","consideration"], "형용사(비교급) higher 앞 → 부사 자리."],
+ ["___, the company will hire 50 new workers.", ["Additionally","Additional","Addition","Add"], "문장 맨 앞 + 콤마 → 부사 자리."],
+ ["Ms. Song spoke ___ at the conference.", ["confidently","confident","confidence","confide"], "동사 spoke 뒤 → 부사 자리."],
+ ["The new machine is ___ reliable.", ["remarkably","remarkable","remark","remarks"], "be동사와 형용사 reliable 사이 → 부사 자리."],
+ ["The manager ___ approved the request.", ["immediately","immediate","immediacy","immediateness"], "동사 approved 앞 → 부사 자리."],
+ ["The hotel is ___ located near the airport.", ["conveniently","convenient","convenience","inconvenience"], "be동사와 located(형용사 역할 p.p.) 사이 → 부사 자리."],
+ ["The training program was ___ effective.", ["relatively","relative","relation","relate"], "be동사와 형용사 effective 사이 → 부사 자리."],
+ ["Please complete the form ___.", ["accurately","accurate","accuracy","inaccuracy"], "동사 complete + 목적어 뒤 → 부사 자리."],
+ ["___, the shipment arrived two days early.", ["Fortunately","Fortunate","Fortune","Fortunes"], "문장 맨 앞 + 콤마 → 부사 자리."],
+ ["The team members communicate ___ with each other.", ["effectively","effective","effect","effectiveness"], "동사 communicate 뒤 → 부사 자리."]
+],
+ger: [
+ ["Many employees enjoy ___ with the new software.", ["working","to work","worked","works"], "enjoy + 동명사 → working."],
+ ["The team finished ___ the report at 6 p.m.", ["writing","to write","written","writes"], "finish + 동명사 → writing."],
+ ["Please avoid ___ personal calls during work hours.", ["making","to make","made","makes"], "avoid + 동명사 → making."],
+ ["The company is considering ___ a new branch in Busan.", ["opening","to open","opened","opens"], "consider + 동명사 → opening."],
+ ["___ English every day helps employees improve their skills.", ["Practicing","Practiced","Practices","To practicing"], "동사 helps 앞 주어 자리 + 목적어 English → 동명사 주어 Practicing."],
+ ["Reading customer reviews ___ us improve our products.", ["helps","help","helping","to help"], "동명사 주어(Reading ~)는 단수 취급 → 동사에 -s → helps."],
+ ["Ms. Kang finished ___ the files before lunch.", ["organizing","to organize","organized","organizes"], "finish + 동명사 → organizing."],
+ ["We should avoid ___ the same mistake again.", ["repeating","to repeat","repeated","repeats"], "avoid + 동명사 → repeating."],
+ ["Mr. Seo is considering ___ his contract.", ["renewing","to renew","renewed","renews"], "consider + 동명사 → renewing."],
+ ["Exercising regularly ___ employees healthy.", ["keeps","keep","keeping","to keep"], "동명사 주어(Exercising ~)는 단수 → keeps."],
+ ["Attending industry conferences ___ a great way to network.", ["is","are","being","to be"], "동명사 주어는 단수 취급 → conferences에 속지 말고 is."],
+ ["Many customers enjoy ___ online.", ["shopping","to shop","shopped","shops"], "enjoy + 동명사 → shopping."],
+ ["The engineers finished ___ the new equipment.", ["testing","to test","tested","tests"], "finish + 동명사 → testing."],
+ ["Please avoid ___ your car in front of the entrance.", ["parking","to park","parked","parks"], "avoid + 동명사 → parking."],
+ ["The board is considering ___ the company's name.", ["changing","to change","changed","changes"], "consider + 동명사 → changing."],
+ ["Managing several projects at once ___ excellent planning.", ["requires","require","requiring","to require"], "동명사 주어(Managing ~)는 단수 → requires."],
+ ["Mr. Bae enjoys ___ new clients.", ["meeting","to meet","met","meets"], "enjoy + 동명사 → meeting."],
+ ["Updating the software regularly ___ security problems.", ["prevents","prevent","preventing","to prevent"], "동명사 주어(Updating ~)는 단수 → prevents."],
+ ["The staff finished ___ the conference room for the event.", ["preparing","to prepare","prepared","prepares"], "finish + 동명사 → preparing."],
+ ["Customers should avoid ___ their passwords with others.", ["sharing","to share","shared","shares"], "avoid + 동명사 → sharing."],
+ ["Hiring experienced workers ___ the company time and money.", ["saves","save","saving","to save"], "동명사 주어(Hiring ~)는 단수 → saves."],
+ ["Mr. Hwang considered ___ to the Tokyo office.", ["transferring","to transfer","transferred","transfers"], "consider + 동명사 → transferring."]
+],
+quant: [
+ ["Each ___ must wear an ID badge.", ["employee","employees","employment","employing"], "each + 가산 단수 명사 → employee."],
+ ["Many ___ attended the seminar.", ["participants","participant","participation","participate"], "many + 가산 복수 명사 → participants."],
+ ["Much ___ is available on our Web site.", ["information","informations","informative","inform"], "much + 불가산 명사 → information (불가산이라 -s 불가)."],
+ ["Every ___ in the office has a new computer.", ["worker","workers","work","working"], "every + 가산 단수 명사 → worker."],
+ ["Several ___ were made to the contract.", ["changes","change","changed","changing"], "several + 가산 복수 명사 → changes."],
+ ["There is little ___ that the plan will succeed.", ["doubt","doubts","doubtful","doubtfully"], "little + 불가산 명사 → doubt."],
+ ["Both ___ were approved by the board.", ["proposals","proposal","propose","proposed"], "both + 가산 복수 명사 → proposals."],
+ ["All ___ must be submitted by Friday.", ["documents","document","documented","documenting"], "all + 가산 복수(또는 불가산) → 가산명사 document는 복수 documents."],
+ ["Few ___ applied for the position.", ["candidates","candidate","candidacy","candid"], "few + 가산 복수 명사 → candidates."],
+ ["The consultant gave us much ___ about the project.", ["advice","advices","advise","advisory"], "much + 불가산 명사 → advice (불가산이라 -s 불가)."],
+ ["Any ___ about the schedule should be directed to Ms. Lim.", ["inquiries","inquire","inquiring","inquired"], "any는 가산 단수·복수·불가산 모두 가능 → 명사가 필요. inquiries."],
+ ["Each ___ will receive a certificate.", ["participant","participants","participation","participate"], "each + 가산 단수 명사 → participant."],
+ ["Many ___ prefer to work from home.", ["employees","employee","employment","employ"], "many + 가산 복수 명사 → employees."],
+ ["The new copier requires little ___.", ["maintenance","maintain","maintained","maintains"], "little + 불가산 명사 → maintenance."],
+ ["Every ___ is checked twice before shipping.", ["product","products","production","produce"], "every + 가산 단수 명사 → product."],
+ ["Several ___ have signed up to help at the event.", ["volunteers","volunteer","voluntary","voluntarily"], "several + 가산 복수 명사 → volunteers."],
+ ["All ___ is shipped free of charge.", ["merchandise","merchandises","merchandiser","merchandised"], "all + 불가산 명사 + 단수 동사 is → merchandise (불가산)."],
+ ["Both ___ of the building will be renovated.", ["floors","floor","flooring","floored"], "both + 가산 복수 명사 → floors."],
+ ["Much ___ has been made on the new project.", ["progress","progresses","progressive","progressively"], "much + 불가산 명사 → progress."],
+ ["Any ___ with questions should contact the HR department.", ["employee","employ","employable","employed"], "any + 가산 단수도 가능 → 명사 employee."],
+ ["Few ___ were available at the meeting.", ["seats","seat","seating","seated"], "few + 가산 복수 명사 → seats."],
+ ["Each ___ of the report must be reviewed.", ["section","sections","sectional","sectioned"], "each + 가산 단수 명사 → section."],
+ ["Little ___ was paid to the issue.", ["attention","attentions","attentive","attentively"], "little + 불가산 명사 → attention."],
+ ["Every ___ is recorded in the system.", ["transaction","transactions","transact","transactional"], "every + 가산 단수 명사 → transaction."]
+]
+};
+const TYPE_KEYS = Object.keys(TYPES);
+const QS = [];
+TYPE_KEYS.forEach(t => RAW[t].forEach((r, i) => QS.push({ id: t + "-" + i, t, s: r[0], o: r[1], e: r[2] })));
+const QMAP = Object.fromEntries(QS.map(q => [q.id, q]));
+
+/* ================= 저장 (실패해도 동작) ================= */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("p5drill_" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("p5drill_" + k, JSON.stringify(v)); } catch (e) {} }
+};
+let mastery = Object.assign(Object.fromEntries(TYPE_KEYS.map(t => [t, 0])), store.get("mastery", {}));
+let best = store.get("best", 0);
+let wrongNote = store.get("wrong", []).filter(id => QMAP[id]);
+let settings = Object.assign({ timer: false, vib: true }, store.get("settings", {}));
+let masterShown = store.get("masterShown", false);
+
+const $ = id => document.getElementById(id);
+const LETTERS = ["A", "B", "C", "D"];
+const MASTER_LINE = 80, TIME_LIMIT = 20;
+
+/* ================= 유틸 ================= */
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function vibrate(p) { if (!settings.vib) return; try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+function allMastered() { return TYPE_KEYS.every(t => mastery[t] >= MASTER_LINE); }
+function gaugeClass(v) { return v >= MASTER_LINE ? "hi" : v < 40 ? "lo" : ""; }
+function gaugeHTML(label, v, right) {
+  return `<div class="m-label"><span>${label}</span><span>${right}</span></div><div class="gauge"><i class="${gaugeClass(v)}" style="width:${v}%"></i></div>`;
+}
+function show(id) { document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id)); window.scrollTo(0, 0); }
+function bump(el) { el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
+function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2900); }
+function floatText(msg) { const f = document.createElement("div"); f.className = "float"; f.textContent = msg; document.body.appendChild(f); setTimeout(() => f.remove(), 950); }
+
+/* ================= 홈 ================= */
+function renderHome() {
+  $("bestScore").textContent = best.toLocaleString();
+  $("totalQ").textContent = QS.length + "문항";
+  $("masteryList").innerHTML = TYPE_KEYS.map(t => `<div class="m-item">${gaugeHTML(TYPES[t], mastery[t], mastery[t] + "%")}</div>`).join("");
+  $("masterBadge").classList.toggle("on", allMastered());
+  $("wrongCount").textContent = wrongNote.length;
+  $("btnReview").disabled = wrongNote.length === 0;
+}
+
+/* ================= 게임 ================= */
+let G = null, timerId = null;
+
+function startGame(mode, focusType) {
+  G = { mode, focusType, hearts: 3, score: 0, combo: 0, maxCombo: 0, n: 0, recent: [], cur: null, opts: [], answered: false, timeLeft: TIME_LIMIT,
+        stats: Object.fromEntries(TYPE_KEYS.map(t => [t, { c: 0, n: 0 }])) };
+  $("modeLabel").textContent = mode === "focus" ? "집중: " + TYPES[focusType] : mode === "review" ? "오답노트" : "";
+  show("game");
+  renderHUD();
+  nextQuestion();
+}
+
+function poolFor() {
+  if (G.mode === "focus") return QS.filter(q => q.t === G.focusType);
+  if (G.mode === "review") return wrongNote.map(id => QMAP[id]).filter(Boolean);
+  return QS;
+}
+
+function pickQuestion() {
+  const pool = poolFor();
+  if (!pool.length) return null;
+  const avoidN = Math.min(10, pool.length - 1);
+  const avoid = new Set(avoidN > 0 ? G.recent.slice(-avoidN) : []);
+  let cand = pool.filter(q => !avoid.has(q.id));
+  if (!cand.length) cand = pool;
+  // 유형 가중치: 숙련도가 낮을수록 더 자주 (100% 유형도 최소 가중치 유지)
+  const byType = {};
+  cand.forEach(q => (byType[q.t] = byType[q.t] || []).push(q));
+  const types = Object.keys(byType);
+  const weights = types.map(t => (100 - mastery[t]) + 15);
+  let r = Math.random() * weights.reduce((a, b) => a + b, 0), ti = 0;
+  for (; ti < types.length - 1; ti++) { r -= weights[ti]; if (r < 0) break; }
+  const list = byType[types[ti]];
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function renderHUD() {
+  $("hearts").innerHTML = [0, 1, 2].map(i => `<span class="h ${i >= G.hearts ? "lost" : ""}">❤️</span>`).join("");
+  $("score").textContent = G.score.toLocaleString();
+  const m = comboMult(G.combo);
+  $("combo").innerHTML = `<b>${G.combo}</b>COMBO${m > 1 ? " ×" + m : ""}`;
+  $("combo").classList.toggle("hot", G.combo >= 3);
+}
+
+function comboMult(c) { return Math.min(3, 1 + Math.floor(c / 3) * 0.5); }
+
+function nextQuestion() {
+  const q = pickQuestion();
+  if (!q) { endGame(true); return; }
+  G.cur = q; G.answered = false; G.n++;
+  G.recent.push(q.id); if (G.recent.length > 10) G.recent.shift();
+  G.opts = shuffle(q.o);
+  $("qno").textContent = "Q" + G.n;
+  $("qtag").textContent = TYPES[q.t];
+  $("sentence").innerHTML = q.s.replace("___", '<span class="blank" id="blank">&nbsp;</span>');
+  $("opts").className = "opts";
+  $("opts").innerHTML = G.opts.map((o, i) => `<button class="opt" data-i="${i}"><span class="k">${LETTERS[i]}</span><span>${o}</span></button>`).join("");
+  $("explain").classList.remove("on");
+  $("btnNext").style.display = "none";
+  $("opts").style.display = "";
+  startTimer();
+}
+
+function startTimer() {
+  stopTimer();
+  $("timerbar").classList.toggle("on", settings.timer);
+  $("timeTxt").textContent = "";
+  if (!settings.timer) return;
+  const end = Date.now() + TIME_LIMIT * 1000;
+  const tick = () => {
+    G.timeLeft = Math.max(0, (end - Date.now()) / 1000);
+    $("timerfill").style.width = (G.timeLeft / TIME_LIMIT * 100) + "%";
+    $("timerfill").classList.toggle("low", G.timeLeft <= 5);
+    $("timeTxt").textContent = Math.ceil(G.timeLeft) + "s";
+    if (G.timeLeft <= 0) { stopTimer(); answer(-1); }
+  };
+  tick();
+  timerId = setInterval(tick, 100);
+}
+function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+
+function answer(idx) {
+  if (!G || G.answered) return;
+  G.answered = true;
+  stopTimer();
+  const q = G.cur, correct = q.o[0];
+  const ok = idx >= 0 && G.opts[idx] === correct;
+  const btns = $("opts").querySelectorAll(".opt");
+  $("opts").classList.add("locked");
+  btns.forEach((b, i) => {
+    if (G.opts[i] === correct) b.classList.add("ok");
+    else if (i === idx) b.classList.add("bad");
+    else b.classList.add("dim");
+  });
+  const blank = $("blank");
+  blank.textContent = correct;
+  blank.classList.add(ok ? "ok" : "bad");
+
+  const st = G.stats[q.t]; st.n++;
+  let gain = 0;
+  if (ok) {
+    st.c++;
+    G.combo++; G.maxCombo = Math.max(G.maxCombo, G.combo);
+    const mult = comboMult(G.combo);
+    gain = Math.round(100 * mult + (settings.timer ? Math.ceil(G.timeLeft) * 5 : 0));
+    G.score += gain;
+    mastery[q.t] = Math.min(100, mastery[q.t] + 8);
+    if (G.mode === "review") wrongNote = wrongNote.filter(id => id !== q.id);
+    vibrate(30);
+    bump($("score").parentNode.querySelector(".v"));
+    if (G.combo >= 3) { bump($("combo")); if (G.combo % 3 === 0) floatText(`${G.combo} COMBO! ×${mult}`); }
+  } else {
+    G.combo = 0;
+    G.hearts--;
+    mastery[q.t] = Math.max(0, mastery[q.t] - 12);
+    if (!wrongNote.includes(q.id)) wrongNote.push(q.id);
+    vibrate([60, 40, 60]);
+  }
+  store.set("mastery", mastery);
+  store.set("wrong", wrongNote);
+  renderHUD();
+  if (!ok) { const hs = $("hearts").querySelectorAll(".h"); const h = hs[G.hearts]; if (h) h.classList.add("break"); }
+
+  if (allMastered() && !masterShown) { masterShown = true; store.set("masterShown", true); toast("🏅 Part 5 마스터 달성! 모든 유형 80% 이상"); }
+
+  const res = $("exRes");
+  res.className = "ex-res " + (ok ? "ok" : "bad");
+  res.textContent = ok ? "⭕ 정답!" : idx < 0 ? "⏰ 시간 초과" : "❌ 오답";
+  $("exGain").textContent = ok ? "+" + gain : "";
+  const ci = G.opts.indexOf(correct);
+  $("exAns").innerHTML = `정답 <b>(${LETTERS[ci]}) ${correct}</b> · <span class="pill">${TYPES[q.t]}</span> ${mastery[q.t]}%`;
+  $("exBody").textContent = q.e;
+  $("explain").classList.add("on");
+  const over = G.hearts <= 0 || (G.mode === "review" && wrongNote.length === 0);
+  $("btnNext").textContent = G.hearts <= 0 ? "결과 보기" : over ? "오답노트 완료 → 결과" : "다음 →";
+  $("btnNext").style.display = "";
+  $("opts").style.display = "none";
+  setTimeout(() => $("explain").scrollIntoView({ block: "nearest", behavior: "smooth" }), 50);
+}
+
+function onNext() {
+  if (G.hearts <= 0) return endGame(false);
+  if (G.mode === "review" && wrongNote.length === 0) return endGame(true);
+  nextQuestion();
+}
+
+function endGame(cleared) {
+  stopTimer();
+  const isNew = G.score > best;
+  if (isNew) { best = G.score; store.set("best", best); }
+  $("resTitle").textContent = cleared && G.mode === "review" ? "오답노트를 모두 정복했어요!" : G.hearts <= 0 ? "하트를 모두 잃었어요" : "게임 종료";
+  $("resScore").textContent = G.score.toLocaleString();
+  $("newBest").style.display = isNew && G.score > 0 ? "" : "none";
+  const tot = TYPE_KEYS.reduce((a, t) => a + G.stats[t].n, 0), cor = TYPE_KEYS.reduce((a, t) => a + G.stats[t].c, 0);
+  $("resSolved").textContent = tot;
+  $("resAcc").textContent = tot ? Math.round(cor / tot * 100) + "%" : "–";
+  $("resCombo").textContent = G.maxCombo;
+  const rows = TYPE_KEYS.filter(t => G.stats[t].n > 0);
+  $("resTypes").innerHTML = rows.length ? rows.map(t => {
+    const s = G.stats[t], p = Math.round(s.c / s.n * 100);
+    return `<div class="m-item">${gaugeHTML(TYPES[t], p, `${s.c}/${s.n} · ${p}%`)}</div>`;
+  }).join("") : `<p class="best">푼 문제가 없어요.</p>`;
+  show("result");
+}
+
+/* ================= 시트 ================= */
+function openSheet(id) { $(id).classList.add("on"); }
+function closeSheets() { document.querySelectorAll(".sheet-bg").forEach(s => s.classList.remove("on")); }
+function renderFocus() {
+  $("focusList").innerHTML = TYPE_KEYS.map(t =>
+    `<button class="type-btn" data-type="${t}">${gaugeHTML(TYPES[t], mastery[t], `${RAW[t].length}문항 · ${mastery[t]}%`)}</button>`).join("");
+}
+function renderSettings() {
+  $("swTimer").classList.toggle("on", settings.timer);
+  $("swVib").classList.toggle("on", settings.vib);
+}
+
+/* ================= 이벤트 ================= */
+$("btnStart").onclick = () => startGame("infinite");
+$("btnReview").onclick = () => { if (wrongNote.length) startGame("review"); };
+$("btnFocus").onclick = () => { renderFocus(); openSheet("focusSheet"); };
+$("btnSettings").onclick = () => { renderSettings(); openSheet("settingsSheet"); };
+$("focusList").onclick = e => { const b = e.target.closest("[data-type]"); if (b) { closeSheets(); startGame("focus", b.dataset.type); } };
+$("swTimer").onclick = () => { settings.timer = !settings.timer; store.set("settings", settings); renderSettings(); };
+$("swVib").onclick = () => { settings.vib = !settings.vib; store.set("settings", settings); renderSettings(); if (settings.vib) vibrate(30); };
+$("btnReset").onclick = () => {
+  if (!confirm("숙련도, 최고 점수, 오답노트를 모두 삭제할까요?")) return;
+  mastery = Object.fromEntries(TYPE_KEYS.map(t => [t, 0])); best = 0; wrongNote = []; masterShown = false;
+  store.set("mastery", mastery); store.set("best", 0); store.set("wrong", []); store.set("masterShown", false);
+  renderHome(); closeSheets();
+};
+document.querySelectorAll(".sheet-bg").forEach(bg => bg.addEventListener("click", e => { if (e.target === bg || e.target.hasAttribute("data-close")) closeSheets(); }));
+$("opts").onclick = e => { const b = e.target.closest(".opt"); if (b) answer(+b.dataset.i); };
+$("btnNext").onclick = onNext;
+$("btnQuit").onclick = () => { if (confirm("게임을 끝내고 결과를 볼까요?")) endGame(false); };
+$("btnRetry").onclick = () => {
+  if (G.mode === "review" && !wrongNote.length) startGame("infinite"); else startGame(G.mode, G.focusType);
+};
+$("btnHome").onclick = () => { renderHome(); show("home"); };
+document.addEventListener("keydown", e => {
+  if (!$("game").classList.contains("active")) return;
+  const k = e.key.toLowerCase(), i = ["1", "2", "3", "4"].indexOf(k) >= 0 ? +k - 1 : ["a", "b", "c", "d"].indexOf(k);
+  if (!G.answered && i >= 0) answer(i);
+  else if (G.answered && (k === "enter" || k === " ")) { e.preventDefault(); onNext(); }
+});
+
+renderHome();
+</script>
+</body>
+</html>
